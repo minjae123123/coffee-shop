@@ -1,4 +1,4 @@
-package com.example.coffeeshop.domain.menu.dto;
+package com.example.coffeeshop.domain.menu.dto.response;
 
 import com.example.coffeeshop.domain.menu.entity.Menu;
 
