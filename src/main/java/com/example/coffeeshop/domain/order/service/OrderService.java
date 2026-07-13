@@ -7,6 +7,7 @@ import com.example.coffeeshop.domain.order.dto.response.OrderResponse;
 import com.example.coffeeshop.domain.order.entity.CoffeeOrder;
 import com.example.coffeeshop.domain.order.repository.OrderRepository;
 import com.example.coffeeshop.domain.outbox.entity.OrderOutbox;
+import com.example.coffeeshop.domain.outbox.event.OrderOutboxCreatedEvent;
 import com.example.coffeeshop.domain.outbox.repository.OrderOutboxRepository;
 import com.example.coffeeshop.domain.point.entity.PointHistory;
 import com.example.coffeeshop.domain.point.entity.UserPoint;
@@ -16,6 +17,7 @@ import com.example.coffeeshop.domain.user.repository.UserRepository;
 import com.example.coffeeshop.global.exception.CustomException;
 import com.example.coffeeshop.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,7 @@ public class OrderService {
     private final PointHistoryRepository pointHistoryRepository;
     private final OrderRepository orderRepository;
     private final OrderOutboxRepository orderOutboxRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public OrderResponse order(OrderRequest request) {
@@ -57,8 +60,12 @@ public class OrderService {
                 PointHistory.use(userId, paymentAmount)
         );
 
-        orderOutboxRepository.save(
+        OrderOutbox outbox = orderOutboxRepository.save(
                 OrderOutbox.from(order)
+        );
+
+        eventPublisher.publishEvent(
+                new OrderOutboxCreatedEvent(outbox.getId())
         );
 
         return OrderResponse.of(order, userPoint.getPoint());
